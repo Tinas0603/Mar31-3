@@ -9,13 +9,22 @@ router.post('/login', async function (req, res, next) {
     try {
         let username = req.body.username;
         let password = req.body.password;
-        let result = await userControllers.checkLogin(username, password);
+        let userId = await userControllers.checkLogin(username, password); // Giả sử trả về user ID
+
+        // Tạo token
+        const token = jwt.sign({
+            id: userId,
+            expireIn: Date.now() + 3600 * 1000 // Hết hạn sau 1 giờ
+        }, constants.SECRET_KEY);
+
+        // Trả về token trong response
         res.status(200).send({
             success: true,
-            data: jwt.sign({
-                id: result,
-                expireIn: (new Date(Date.now() + 3600 * 1000)).getTime()
-            }, constants.SECRET_KEY)
+            data: {
+                token: token, // Trả token rõ ràng
+                userId: userId,
+                expiresIn: 3600 // Thời gian hết hạn (giây)
+            }
         });
     } catch (error) {
         next(error);

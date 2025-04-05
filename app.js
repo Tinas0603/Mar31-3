@@ -8,6 +8,8 @@ require('dotenv').config();
 
 var indexRouter = require('./routes/index');
 var usersRouter = require('./routes/users');
+var productSchema = require('./schemas/product');
+var categorySchema = require('./schemas/category');
 
 var app = express();
 
@@ -57,13 +59,76 @@ app.use('/roles', require('./routes/roles'));
 app.use('/auth', require('./routes/auth'));
 app.use('/products', require('./routes/products'));
 app.use('/categories', require('./routes/categories'));
+app.use('/menu', require('./routes/menu'));
+app.get('/api/:categoryslug', async (req, res, next) => {
+  try {
+    const category = await categorySchema.findOne({ slug: req.params.categoryslug });
+    if (!category) {
+      return res.status(404).send({
+        success: false,
+        message: 'Category not found'
+      });
+    }
 
-// catch 404 and forward to error handler
+    const products = await productSchema.find({ category: category._id })
+      .populate('category', 'name slug');
+
+    res.status(200).send({
+      success: true,
+      data: {
+        category: {
+          name: category.name,
+          slug: category.slug
+        },
+        products: products
+      }
+    });
+  } catch (error) {
+    res.status(500).send({
+      success: false,
+      message: error.message
+    });
+  }
+});
+
+app.get('/api/:categoryslug/:productslug', async (req, res, next) => {
+  try {
+    const category = await categorySchema.findOne({ slug: req.params.categoryslug });
+    if (!category) {
+      return res.status(404).send({
+        success: false,
+        message: 'Category not found'
+      });
+    }
+
+    const product = await productSchema.findOne({
+      slug: req.params.productslug,
+      category: category._id
+    }).populate('category', 'name slug');
+
+    if (!product) {
+      return res.status(404).send({
+        success: false,
+        message: 'Product not found'
+      });
+    }
+
+    res.status(200).send({
+      success: true,
+      data: product
+    });
+  } catch (error) {
+    res.status(500).send({
+      success: false,
+      message: error.message
+    });
+  }
+});
+
 app.use(function (req, res, next) {
   next(createError(404));
 });
 
-// error handler
 app.use(function (err, req, res, next) {
   res.locals.message = err.message;
   res.locals.error = req.app.get('env') === 'development' ? err : {};

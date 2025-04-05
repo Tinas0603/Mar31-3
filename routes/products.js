@@ -66,6 +66,7 @@ router.post('/', check_authentication, check_authorization(['moderator', 'admin'
       if (getCategory) {
         let newProduct = new productSchema({
           name: body.name,
+          slug: body.name.toLowerCase().replace(/ /g, '-'),
           price: body.price ? body.price : 0,
           quantity: body.quantity ? body.quantity : 0,
           category: getCategory._id,
@@ -98,6 +99,7 @@ router.put('/:id', check_authentication, check_authorization(['moderator', 'admi
         let body = req.body;
         if (body.name) {
           product.name = body.name;
+          product.slug = body.name.toLowerCase().replace(/ /g, '-');
         }
         if (body.price) {
           product.price = body.price;

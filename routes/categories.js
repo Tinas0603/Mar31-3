@@ -32,7 +32,8 @@ router.post('/', check_authentication, check_authorization(['moderator', 'admin'
     try {
       let body = req.body;
       let newCategory = new categorySchema({
-        name: body.name
+        name: body.name,
+        slug: body.name.toLowerCase().replace(/ /g, '-')
       });
       await newCategory.save()
       res.status(200).send({
@@ -56,6 +57,7 @@ router.put('/:id', check_authentication, check_authorization(['moderator', 'admi
         let body = req.body;
         if (body.name) {
           category.name = body.name;
+          category.slug = body.name.toLowerCase().replace(/ /g, '-');
         }
         await category.save()
         res.status(200).send({
